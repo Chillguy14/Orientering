@@ -68,7 +68,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.22 0.02 50);
 
-  /* Huvudfärg: orienterings-orange (≈ #FF6600) */
+  /* Huvudfärg: orienterings-orange */
   --primary: oklch(0.68 0.2 42);
   --primary-foreground: oklch(1 0 0);
 
@@ -106,7 +106,6 @@
   --sidebar-border: oklch(0.9 0.012 60);
   --sidebar-ring: oklch(0.68 0.2 42);
 
-  /* Behåller namnet så inget går sönder, men nu orange */
   --gradient-forest: linear-gradient(160deg, oklch(0.62 0.19 40) 0%, oklch(0.74 0.19 50) 100%);
   --shadow-card: 0 10px 30px -12px oklch(0.4 0.1 40 / 0.25);
 }
@@ -156,20 +155,6 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    min-height: 100vh;
-  }
-
-  /* Skogsbilden som fast bakgrund, med ett vitt "dis" ovanpå så texten syns */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    background-image:
-      linear-gradient(oklch(1 0 0 / 0.6), oklch(1 0 0 / 0.6)),
-      url("/bakgrund.jpg");
-    background-size: cover;
-    background-position: center;
   }
 
   ::selection {
@@ -204,7 +189,12 @@
   box-shadow: var(--shadow-card);
 }
 
+/* Toppfältet på startsidan: skogsbilden med mörk toning så vit text syns */
 @utility forest-panel {
-  background-image: var(--gradient-forest);
-  color: var(--color-primary-foreground);
+  background-image:
+    linear-gradient(180deg, oklch(0.15 0.02 45 / 0.7) 0%, oklch(0.15 0.02 45 / 0.45) 100%),
+    url("/bakgrund.jpg");
+  background-size: cover;
+  background-position: center;
+  color: oklch(1 0 0);
 }
