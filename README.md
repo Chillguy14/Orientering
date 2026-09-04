@@ -1,29 +1,16 @@
-# Welcome to your Lovable project
+# Kontrollen – orientering med QR-koder
 
-This project was built with [Lovable](https://lovable.dev).
+Skapa en runda, skriv ut QR-kontroller och låt deltagarna stämpla med mobilen.
 
-## Build with Lovable
+- Frontend: React, TanStack Start, Tailwind, shadcn/ui
+- Databas: Supabase
+- Hosting: Vercel
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+## Utveckling
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+Kör `bun install` och sedan `bun dev`.
 
-## Development
+Miljövariabler (i `.env` lokalt, i Vercel för produktion):
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
-
-## Built with
-
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_PUBLISHABLE_KEY
