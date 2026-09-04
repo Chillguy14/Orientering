@@ -156,6 +156,20 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    min-height: 100vh;
+  }
+
+  /* Skogsbilden som fast bakgrund, med ett vitt "dis" ovanpå så texten syns */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(oklch(1 0 0 / 0.6), oklch(1 0 0 / 0.6)),
+      url("/bakgrund.jpg");
+    background-size: cover;
+    background-position: center;
   }
 
   ::selection {
