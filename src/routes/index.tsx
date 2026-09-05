@@ -11,13 +11,13 @@ import {
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Kontrollen – orientering med digitala kontroller" },
+      { title: "Orientering" },
       {
         name: "description",
         content:
           "Starta en orienteringsomgång, skriv ut QR-kontroller och låt alla deltagare stämpla av kontrollerna med mobilen.",
       },
-      { property: "og:title", content: "Kontrollen – orientering med digitala kontroller" },
+      { property: "og:title", content: "Orientering" },
       {
         property: "og:description",
         content:
