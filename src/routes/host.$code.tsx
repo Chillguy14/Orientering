@@ -21,12 +21,12 @@ import {
 export const Route = createFileRoute("/host/$code")({
   head: () => ({
     meta: [
-      { title: "Arrangör – Kontrollen" },
+      { title: "Arrangör – Orientering" },
       {
         name: "description",
         content: "Skriv ut kontrollernas streckkoder, dela koden och starta omgången.",
       },
-      { property: "og:title", content: "Arrangör – Kontrollen" },
+      { property: "og:title", content: "Arrangör – Orientering" },
       {
         property: "og:description",
         content: "Skriv ut kontrollernas streckkoder, dela koden och starta omgången.",
