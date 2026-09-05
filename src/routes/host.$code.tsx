@@ -151,7 +151,8 @@ function HostPage() {
             </p>
             <p className="font-display text-7xl leading-none tracking-[0.15em]">{session.code}</p>
             <p className="mt-2 text-sm opacity-90">
-              {session.control_count} kontroller · {current.length} deltagare ·{" "}
+              {session.control_count} kontroller ·{" "}
+              {session.ordered ? "i nummerordning" : "valfri ordning"} · {current.length} deltagare ·{" "}
               {started ? "omgången är igång" : "väntar på start"}
             </p>
           </div>

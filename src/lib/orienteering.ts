@@ -7,6 +7,7 @@ export type SessionRow = {
   control_count: number;
   status: string;
   round: number;
+  ordered: boolean;
   created_at: string;
   started_at: string | null;
 };
@@ -61,7 +62,7 @@ export function sessionTitle(session: Pick<SessionRow, "name" | "code">) {
   return n && n.length > 0 ? n : `Omgång ${session.code}`;
 }
 
-export async function createSession(controlCount: number, name: string) {
+export async function createSession(controlCount: number, name: string, ordered: boolean) {
   let code = randomCode();
   let created: SessionRow | null = null;
 
@@ -72,6 +73,7 @@ export async function createSession(controlCount: number, name: string) {
         code,
         control_count: controlCount,
         name: name.trim().slice(0, 60) || null,
+        ordered,
       })
       .select()
       .single();

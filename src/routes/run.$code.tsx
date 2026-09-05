@@ -133,19 +133,24 @@ function RunPage() {
         setMessage("Okänd kontroll.");
         return;
       }
-      setTakenIds((prev) => {
-        if (prev.includes(control.id)) {
-          setMessage(`Kontroll ${control.number} är redan avklarad.`);
-          return prev;
+      if (takenIds.includes(control.id)) {
+        setMessage(`Kontroll ${control.number} är redan avklarad.`);
+        return;
+      }
+      if (session.ordered) {
+        const next = nextControlNumber(controls, takenIds);
+        if (next != null && control.number !== next) {
+          setMessage(`Fel ordning – du ska ta kontroll ${next} härnäst.`);
+          return;
         }
-        void supabase
-          .from("punches")
-          .insert({ participant_id: participantId, control_id: control.id })
-          .then(() => setMessage(`Kontroll ${control.number} avklarad!`));
-        return [...prev, control.id];
-      });
+      }
+      setTakenIds((prev) => (prev.includes(control.id) ? prev : [...prev, control.id]));
+      void supabase
+        .from("punches")
+        .insert({ participant_id: participantId, control_id: control.id })
+        .then(() => setMessage(`Kontroll ${control.number} avklarad!`));
     },
-    [session, participantId, controls],
+    [session, participantId, controls, takenIds],
   );
 
   useEffect(() => {
@@ -214,6 +219,11 @@ function RunPage() {
                   {takenIds.length}/{controls.length}
                 </p>
                 <p className="text-sm text-muted-foreground">kontroller avklarade</p>
+                {session.ordered && !allDone ? (
+                  <p className="mt-1 text-sm font-semibold text-accent">
+                    Nästa: kontroll {nextControlNumber(controls, takenIds)}
+                  </p>
+                ) : null}
               </div>
               {session.started_at ? (
                 <Timer startedAt={session.started_at} stopped={allDone} />
@@ -242,13 +252,17 @@ function RunPage() {
               <ul className="mt-3 grid grid-cols-4 gap-3 sm:grid-cols-6">
                 {controls.map((c) => {
                   const done = takenIds.includes(c.id);
+                  const isNext =
+                    session.ordered && !done && c.number === nextControlNumber(controls, takenIds);
                   return (
                     <li
                       key={c.id}
                       className={`flex aspect-square items-center justify-center rounded-xl border font-display text-2xl ${
                         done
                           ? "border-transparent bg-accent text-accent-foreground"
-                          : "border-border bg-card text-muted-foreground"
+                          : isNext
+                            ? "border-primary bg-card text-primary"
+                            : "border-border bg-card text-muted-foreground"
                       }`}
                     >
                       {c.number}
@@ -262,6 +276,12 @@ function RunPage() {
       </section>
     </main>
   );
+}
+
+/** Lägsta kontrollnummer som inte är taget än (för nummerordning). */
+function nextControlNumber(controls: ControlRow[], takenIds: string[]) {
+  const left = controls.filter((c) => !takenIds.includes(c.id)).map((c) => c.number);
+  return left.length > 0 ? Math.min(...left) : null;
 }
 
 function Timer({ startedAt, stopped }: { startedAt: string; stopped: boolean }) {

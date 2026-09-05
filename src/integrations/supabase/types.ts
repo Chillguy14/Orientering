@@ -11,6 +11,7 @@ export type Database = {
           control_count: number;
           status: string;
           round: number;
+          ordered: boolean;
           created_at: string;
           started_at: string | null;
         };
@@ -21,6 +22,7 @@ export type Database = {
           control_count?: number;
           status?: string;
           round?: number;
+          ordered?: boolean;
           created_at?: string;
           started_at?: string | null;
         };
@@ -31,6 +33,7 @@ export type Database = {
           control_count?: number;
           status?: string;
           round?: number;
+          ordered?: boolean;
           created_at?: string;
           started_at?: string | null;
         };

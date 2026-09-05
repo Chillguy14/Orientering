@@ -33,6 +33,7 @@ function Index() {
   const [step, setStep] = useState<"start" | "setup">("start");
   const [count, setCount] = useState(6);
   const [roundName, setRoundName] = useState("");
+  const [ordered, setOrdered] = useState(false);
   const [joinCode, setJoinCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +47,7 @@ function Index() {
     setBusy(true);
     setError(null);
     try {
-      const session = await createSession(Math.min(30, Math.max(1, count)), roundName);
+      const session = await createSession(Math.min(30, Math.max(1, count)), roundName, ordered);
       void navigate({ to: "/host/$code", params: { code: session.code } });
     } catch {
       setError("Kunde inte skapa omgången. Försök igen.");
@@ -154,6 +155,36 @@ function Index() {
                     aria-label="Fler kontroller"
                   >
                     +
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground">Ordning</p>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setOrdered(false)}
+                    className={`rounded-xl border px-4 py-3 text-left ${
+                      !ordered
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-foreground"
+                    }`}
+                  >
+                    <span className="font-display text-xl">Valfri ordning</span>
+                    <span className="block text-xs opacity-80">Ta kontrollerna hur du vill</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setOrdered(true)}
+                    className={`rounded-xl border px-4 py-3 text-left ${
+                      ordered
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-foreground"
+                    }`}
+                  >
+                    <span className="font-display text-xl">I nummerordning</span>
+                    <span className="block text-xs opacity-80">1, 2, 3 … i tur och ordning</span>
                   </button>
                 </div>
               </div>
