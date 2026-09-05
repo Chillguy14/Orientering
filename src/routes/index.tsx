@@ -1,6 +1,12 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
-import { createSession, getSessionByCode } from "@/lib/orienteering";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import {
+  createSession,
+  getSessionByCode,
+  listHostedRounds,
+  removeHostedRound,
+  type HostedRound,
+} from "@/lib/orienteering";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -26,15 +32,21 @@ function Index() {
   const navigate = useNavigate();
   const [step, setStep] = useState<"start" | "setup">("start");
   const [count, setCount] = useState(6);
+  const [roundName, setRoundName] = useState("");
   const [joinCode, setJoinCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hosted, setHosted] = useState<HostedRound[]>([]);
+
+  useEffect(() => {
+    setHosted(listHostedRounds());
+  }, []);
 
   async function handleCreate() {
     setBusy(true);
     setError(null);
     try {
-      const session = await createSession(Math.min(30, Math.max(1, count)));
+      const session = await createSession(Math.min(30, Math.max(1, count)), roundName);
       void navigate({ to: "/host/$code", params: { code: session.code } });
     } catch {
       setError("Kunde inte skapa omgången. Försök igen.");
@@ -60,6 +72,11 @@ function Index() {
       setError("Något gick fel. Försök igen.");
       setBusy(false);
     }
+  }
+
+  function forget(code: string) {
+    removeHostedRound(code);
+    setHosted(listHostedRounds());
   }
 
   return (
@@ -91,43 +108,62 @@ function Index() {
               Starta ny omgång
             </button>
           ) : (
-            <div className="space-y-5">
+            <div className="space-y-6">
               <div>
-                <h2 className="text-3xl text-primary">Hur många kontroller?</h2>
+                <h2 className="text-3xl text-primary">Ny runda</h2>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Välj antal kontroller som ska genereras (1–30).
+                  Ge rundan ett namn och välj antal kontroller (1–30).
                 </p>
               </div>
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setCount((c) => Math.max(1, c - 1))}
-                  className="h-14 w-14 rounded-xl border border-border font-display text-2xl text-primary"
-                  aria-label="Färre kontroller"
-                >
-                  −
-                </button>
+
+              <div>
+                <label className="text-sm font-semibold text-muted-foreground" htmlFor="roundName">
+                  Namn på rundan
+                </label>
                 <input
-                  type="number"
-                  min={1}
-                  max={30}
-                  value={count}
-                  onChange={(e) => setCount(Number(e.target.value))}
-                  className="h-14 w-full rounded-xl border border-input bg-background text-center font-display text-3xl text-foreground"
+                  id="roundName"
+                  value={roundName}
+                  onChange={(e) => setRoundName(e.target.value)}
+                  placeholder="T.ex. Skolskogen, 6 kontroller"
+                  maxLength={60}
+                  className="mt-2 h-14 w-full rounded-xl border border-input bg-background px-4 text-lg text-foreground"
                 />
-                <button
-                  onClick={() => setCount((c) => Math.min(30, c + 1))}
-                  className="h-14 w-14 rounded-xl border border-border font-display text-2xl text-primary"
-                  aria-label="Fler kontroller"
-                >
-                  +
-                </button>
               </div>
+
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground">Antal kontroller</p>
+                <div className="mt-2 flex items-center gap-3">
+                  <button
+                    onClick={() => setCount((c) => Math.max(1, c - 1))}
+                    className="h-14 w-14 rounded-xl border border-border font-display text-2xl text-primary"
+                    aria-label="Färre kontroller"
+                  >
+                    −
+                  </button>
+                  <input
+                    type="number"
+                    min={1}
+                    max={30}
+                    value={count}
+                    onChange={(e) => setCount(Number(e.target.value))}
+                    className="h-14 w-full rounded-xl border border-input bg-background text-center font-display text-3xl text-foreground"
+                  />
+                  <button
+                    onClick={() => setCount((c) => Math.min(30, c + 1))}
+                    className="h-14 w-14 rounded-xl border border-border font-display text-2xl text-primary"
+                    aria-label="Fler kontroller"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
               <button
                 disabled={busy}
                 onClick={() => void handleCreate()}
                 className="w-full rounded-xl bg-primary px-6 py-4 font-display text-2xl text-primary-foreground disabled:opacity-60"
               >
-                {busy ? "Genererar..." : "Klart"}
+                {busy ? "Genererar..." : "Skapa rundan"}
               </button>
             </div>
           )}
@@ -156,6 +192,46 @@ function Index() {
 
           {error ? <p className="mt-4 text-sm text-destructive">{error}</p> : null}
         </div>
+
+        {hosted.length > 0 ? (
+          <div className="mt-10">
+            <h2 className="text-3xl text-primary">Dina rundor</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Rundor du skapat i den här webbläsaren. Öppna en för att köra den igen med samma
+              QR-koder.
+            </p>
+            <ul className="mt-4 space-y-3">
+              {hosted.map((r) => (
+                <li key={r.code} className="surface-card flex items-center justify-between gap-3 p-4">
+                  <Link to="/host/$code" params={{ code: r.code }} className="min-w-0 flex-1">
+                    <p className="truncate font-display text-2xl text-foreground">
+                      {r.name?.trim() || `Omgång ${r.code}`}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Kod {r.code} · {r.controlCount} kontroller ·{" "}
+                      {new Date(r.createdAt).toLocaleDateString("sv-SE")}
+                    </p>
+                  </Link>
+                  <Link
+                    to="/host/$code"
+                    params={{ code: r.code }}
+                    className="shrink-0 rounded-xl bg-primary px-4 py-2 font-display text-lg text-primary-foreground"
+                  >
+                    Öppna
+                  </Link>
+                  <button
+                    onClick={() => forget(r.code)}
+                    className="shrink-0 rounded-xl border border-border px-3 py-2 text-sm text-muted-foreground"
+                    aria-label="Ta bort från listan"
+                    title="Ta bort från listan"
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </section>
     </main>
   );

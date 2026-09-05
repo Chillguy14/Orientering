@@ -8,6 +8,7 @@ import {
   getSessionByCode,
   parsePayload,
   readParticipant,
+  sessionTitle,
   storeParticipant,
   type ControlRow,
   type SessionRow,
@@ -48,13 +49,21 @@ function RunPage() {
       if (!active) return;
       setSession(s);
       if (s) setControls(await getControls(s.id));
-      setParticipantId(readParticipant(code));
       setLoading(false);
     })();
     return () => {
       active = false;
     };
   }, [code]);
+
+  // När omgångsnumret ändras (arrangören tryckte "Kör igen") nollställs deltagaren.
+  const round = session?.round ?? null;
+  useEffect(() => {
+    if (round == null) return;
+    setParticipantId(readParticipant(code, round));
+    setTakenIds([]);
+    setMessage(null);
+  }, [code, round]);
 
   useEffect(() => {
     if (!participantId) return;
@@ -67,32 +76,47 @@ function RunPage() {
     })();
   }, [participantId]);
 
+  // Lyssna alltid på ändringar av just den här omgången (start, omstart).
+  const sessionId = session?.id ?? null;
   useEffect(() => {
-    if (!session || session.status !== "lobby") return;
+    if (!sessionId) return;
     const channel = supabase
-      .channel(`run-${session.id}`)
-      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "sessions" }, () => {
-        void getSessionByCode(code).then((s) => s && setSession(s));
-      })
+      .channel(`run-${sessionId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "sessions",
+          filter: `id=eq.${sessionId}`,
+        },
+        (payload) => {
+          setSession(payload.new as SessionRow);
+        },
+      )
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [session, code]);
+  }, [sessionId]);
 
   async function join(e: React.FormEvent) {
     e.preventDefault();
     if (!session || !name.trim()) return;
     const { data, error } = await supabase
       .from("participants")
-      .insert({ session_id: session.id, name: name.trim().slice(0, 40) })
+      .insert({
+        session_id: session.id,
+        name: name.trim().slice(0, 40),
+        round: session.round,
+      })
       .select()
       .single();
     if (error || !data) {
       setMessage("Kunde inte gå med. Försök igen.");
       return;
     }
-    storeParticipant(code, data.id as string);
+    storeParticipant(code, session.round, data.id as string);
     setParticipantId(data.id as string);
   }
 
@@ -127,9 +151,10 @@ function RunPage() {
   useEffect(() => {
     if (!session?.started_at || !participantId) return;
     if (controls.length > 0 && takenIds.length >= controls.length) {
+      const resultMs = Date.now() - new Date(session.started_at).getTime();
       void supabase
         .from("participants")
-        .update({ finished_at: new Date().toISOString() })
+        .update({ finished_at: new Date().toISOString(), result_ms: resultMs })
         .eq("id", participantId)
         .is("finished_at", null);
     }
@@ -147,9 +172,9 @@ function RunPage() {
           <Link to="/" className="text-sm opacity-80 underline-offset-4 hover:underline">
             ← Startsidan
           </Link>
-          <h1 className="mt-3 font-display text-5xl leading-none">Omgång {session.code}</h1>
+          <h1 className="mt-3 font-display text-5xl leading-none">{sessionTitle(session)}</h1>
           <p className="mt-2 text-sm opacity-90">
-            {controls.length} kontroller ·{" "}
+            Kod {session.code} · omgång {session.round} · {controls.length} kontroller ·{" "}
             {session.status === "lobby" ? "väntar på start" : "igång"}
           </p>
         </div>
@@ -172,6 +197,7 @@ function RunPage() {
             >
               Gå med i omgången
             </button>
+            {message ? <p className="text-sm text-destructive">{message}</p> : null}
           </form>
         ) : session.status === "lobby" ? (
           <div className="surface-card p-6 text-center">
