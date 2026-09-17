@@ -32,6 +32,12 @@ export const Route = createFileRoute("/run/$code")({
   component: RunPage,
 });
 
+/** Lägsta kontrollnummer som inte är taget än (för nummerordning). */
+function nextControlNumber(controls: ControlRow[], takenIds: string[]) {
+  const left = controls.filter((c) => !takenIds.includes(c.id)).map((c) => c.number);
+  return left.length > 0 ? Math.min(...left) : null;
+}
+
 function RunPage() {
   const { code } = Route.useParams();
   const [session, setSession] = useState<SessionRow | null>(null);
@@ -276,12 +282,6 @@ function RunPage() {
       </section>
     </main>
   );
-}
-
-/** Lägsta kontrollnummer som inte är taget än (för nummerordning). */
-function nextControlNumber(controls: ControlRow[], takenIds: string[]) {
-  const left = controls.filter((c) => !takenIds.includes(c.id)).map((c) => c.number);
-  return left.length > 0 ? Math.min(...left) : null;
 }
 
 function Timer({ startedAt, stopped }: { startedAt: string; stopped: boolean }) {
