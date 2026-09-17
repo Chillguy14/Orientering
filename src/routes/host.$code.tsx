@@ -65,7 +65,7 @@ function HostPage() {
     };
   }, [code]);
 
-  // Sanntidsuppdatering (Realtime + 2s polling som säkerhet för noll fördröjning)
+  // Sanntidsuppdatering (Realtime + 2s bakgrundskontroll för noll fördröjning)
   const sessionId = session?.id ?? null;
   useEffect(() => {
     if (!sessionId) return;
