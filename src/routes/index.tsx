@@ -165,7 +165,7 @@ function Index() {
                   <button
                     type="button"
                     onClick={() => setOrdered(false)}
-                    className={`rounded-xl border px-4 py-3 text-left ${
+                    className={`rounded-xl border px-4 py-3 text-left transition-colors ${
                       !ordered
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-background text-foreground"
@@ -177,7 +177,7 @@ function Index() {
                   <button
                     type="button"
                     onClick={() => setOrdered(true)}
-                    className={`rounded-xl border px-4 py-3 text-left ${
+                    className={`rounded-xl border px-4 py-3 text-left transition-colors ${
                       ordered
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-border bg-background text-foreground"
