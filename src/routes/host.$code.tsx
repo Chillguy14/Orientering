@@ -65,26 +65,48 @@ function HostPage() {
     };
   }, [code]);
 
+  // Sanntidsuppdatering (Realtime + 2s polling som säkerhet för noll fördröjning)
+  const sessionId = session?.id ?? null;
   useEffect(() => {
-    if (!session) return;
+    if (!sessionId) return;
+
     const refresh = async () => {
-      const p = await getParticipants(session.id);
+      const p = await getParticipants(sessionId);
       setParticipants(p);
       setPunches(await getPunches(p.map((x) => x.id)));
     };
+
+    // Snabb bakgrundskontroll varannan sekund
+    const interval = setInterval(() => {
+      void refresh();
+    }, 2000);
+
+    // Supabase Realtime för direkt-push (<100ms)
     const channel = supabase
-      .channel(`host-${session.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "participants" }, () => {
-        void refresh();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "punches" }, () => {
-        void refresh();
-      })
+      .channel(`host-${sessionId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "participants", filter: `session_id=eq.${sessionId}` },
+        () => void refresh(),
+      )
+      .on("postgres_changes", { event: "*", schema: "public", table: "punches" }, () =>
+        void refresh(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "sessions", filter: `id=eq.${sessionId}` },
+        (payload) => {
+          setSession(payload.new as SessionRow);
+          void refresh();
+        },
+      )
       .subscribe();
+
     return () => {
+      clearInterval(interval);
       void supabase.removeChannel(channel);
     };
-  }, [session]);
+  }, [sessionId]);
 
   async function startRound() {
     if (!session) return;
