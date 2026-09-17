@@ -62,7 +62,7 @@ export function sessionTitle(session: Pick<SessionRow, "name" | "code">) {
   return n && n.length > 0 ? n : `Omgång ${session.code}`;
 }
 
-export async function createSession(controlCount: number, name: string, ordered: boolean) {
+export async function createSession(controlCount: number, name: string, ordered: boolean = false) {
   let code = randomCode();
   let created: SessionRow | null = null;
 
@@ -78,7 +78,6 @@ export async function createSession(controlCount: number, name: string, ordered:
       .select()
       .single();
     if (error) {
-      // 23505 = koden var upptagen, prova en ny. Annat fel = kasta direkt.
       if (error.code !== "23505" || attempt === 4) throw error;
       code = randomCode();
       continue;
