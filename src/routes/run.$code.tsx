@@ -82,10 +82,22 @@ function RunPage() {
     })();
   }, [participantId]);
 
-  // Lyssna alltid på ändringar av just den här omgången (start, omstart).
+  // Lyssna DIREKT på om arrangören startar omgången eller nollställer
   const sessionId = session?.id ?? null;
   useEffect(() => {
     if (!sessionId) return;
+
+    const checkSession = async () => {
+      const s = await getSessionByCode(code);
+      if (s) setSession(s);
+    };
+
+    // Snabb bakgrundskontroll varannan sekund ifall nätverket tappar sockets
+    const interval = setInterval(() => {
+      void checkSession();
+    }, 2000);
+
+    // Instant WebSocket push när arrangören trycker "Starta omgången"
     const channel = supabase
       .channel(`run-${sessionId}`)
       .on(
@@ -101,10 +113,12 @@ function RunPage() {
         },
       )
       .subscribe();
+
     return () => {
+      clearInterval(interval);
       void supabase.removeChannel(channel);
     };
-  }, [sessionId]);
+  }, [sessionId, code]);
 
   async function join(e: React.FormEvent) {
     e.preventDefault();
